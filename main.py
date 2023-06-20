@@ -16,15 +16,11 @@ def home():
 @app.route("/products")
 def products():
    prods = fetch_data("products")
-
-
    return render_template('products.html', products=prods)
 
 @app.route("/sales")
 def sales():
    sales = fetch_data("sales")
-
-
    return render_template('sales.html', sales=sales)
 
 app.run()
