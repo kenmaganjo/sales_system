@@ -1,4 +1,3 @@
-
 import psycopg2
 
 try:
@@ -8,7 +7,6 @@ try:
 except Exception as e:
     print(e)
    
-
 def fetch_data(tbname):
     try:
         q = "SELECT * FROM " + tbname + ";"
@@ -17,6 +15,7 @@ def fetch_data(tbname):
         return records
     except Exception as e:
         return e
+    
 def insert_products(v):
     vs = str(v)
     q = "insert into products(name,buying_price,selling_price,stock_quantity) "\
