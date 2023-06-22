@@ -109,33 +109,32 @@
                                             aria-label="Close"></button>
                                     </div>
                                     <div class="modal-body">
-                                        <form action="/index.html" method="post">
+                                        <form action="/addsales" method="post">
 
                                             <div class="mb-3">
                                                 <label for="exampleInputID" class="form-label">PID</label>
-                                                <input type="number" name="buying_price" class="form-control"
+                                                <input type="number" name="pid" class="form-control"
                                                     id="exampleInputPassword1">
                                             </div>
 
                                             <div class="mb-3">
                                                 <label for="exampleInputID" class="form-label">Quantiy</label>
-                                                <input type="number" name="stock_quantity" class="form-control"
+                                                <input type="number" name="quantity" class="form-control"
                                                     id="exampleInputPassword1">
                                             </div>
                                             <div class="mb-3">
                                                 <label for="exampleInputID" class="form-label">Created_at</label>
-                                                <input type="datetime-local" name="selling_price" class="form-control"
+                                                <input type="datetime-local" name="created_at" class="form-control"
                                                     id="exampleInputPassword1">
+                                            </div>
+                                            <div>
+                                                <button type="submit" class="btn btn-md btn-success">Submit</button>
                                             </div>
 
                                         </form>
 
                                     </div>
-                                    <div class="modal-footer">
-                                        <button type="button" class="btn btn-secondary"
-                                            data-bs-dismiss="modal">Close</button>
-                                        <button type="button" class="btn btn-primary">Save changes</button>
-                                    </div>
+                                    
                                 </div>
                             </div>
                         </div>
