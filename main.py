@@ -21,7 +21,8 @@ def products():
 @app.route("/sales")
 def sales():
    sales = fetch_data("sales")
-   return render_template('sales.html', sales=sales)
+   prods = fetch_data("products")
+   return render_template('sales.html', sales=sales, prods=prods)
 
 @app.route('/addproducts', methods=["POST","GET"])
 def addproducts():
@@ -39,12 +40,12 @@ def addsales():
    if request.method == "POST":
       pid=request.form["pid"]
       quantity=request.form["quantity"]
-      created_at=request.form["created_at"]
-      sale=(pid,quantity,created_at)
+      sale=(pid,quantity,'now()')
       insert_sales(sale)
       return redirect("/sales")
    
+   
 
-app.run()
+app.run(debug=True)
 
 
