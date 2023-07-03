@@ -31,3 +31,26 @@ def insert_sales(v):
     cur.execute(q)
     conn.commit()
     return q
+
+def sales_per_day():
+    q = "SELECT * FROM sales_per_day;"
+    cur.execute(q)
+    results = cur.fetchall()
+    return results
+
+def sales_per_product():
+    q = "SELECT * FROM sales_per_product;"
+    cur.execute(q)
+    results = cur.fetchall()
+    return results
+    
+def user_credentials():
+    q = "SELECT email, password FROM users;"
+    cur.execute(q)
+    results = cur.fetchall()
+    return results
+    
+
+    
+   
+

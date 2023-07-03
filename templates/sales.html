@@ -52,7 +52,7 @@
                                                 <select name="pid">
                                                     
                                                     {% for i in prods %}
-                                                        {% if i[0] > 15 and i[0] <= 25 %}
+                                                        {% if i[0] > 1 and i[0] <= 65 %}
                                                         <option value="{{ i[0] }}">{{ i[1] }}</option>
                                                         {% endif %}
                                                     {% endfor %}

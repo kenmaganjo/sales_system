@@ -1,0 +1,23 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+    <div class="container">
+        <div class="row">
+        <div class="col-lg-6 col-sm-12">
+            <embed type="image/svg+xml" src={{chart|safe}} style='max-width:1000px'/>
+        </div>
+        <div class="col-lg-6 col-sm-12">
+            
+            <embed type="image/svg+xml" src={{bar_chart|safe}} style='max-width:1000px'/> 
+           
+        </div>
+        
+        </div>
+
+    </div>
+{% endblock %} 
+   
+ 
+
+
