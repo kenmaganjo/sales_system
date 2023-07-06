@@ -51,6 +51,23 @@ def user_credentials():
     return results
     
 
+def update_product(p):
+    q = "UPDATE products SET name = %s, buying_price = %s, selling_price = %s, stock_quantity =%s WHERE id = %s;"
+    cur.execute(q,p)
+    conn.commit()
+    return q
+
+
+
+
+   
+    
+    
+   
+   
+    
+    
+
     
    
 

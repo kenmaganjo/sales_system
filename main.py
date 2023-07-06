@@ -1,5 +1,5 @@
-from flask import Flask, render_template, request, redirect
-from pgfunc import fetch_data, insert_products, insert_sales,sales_per_day, sales_per_product, user_credentials
+from flask import Flask, render_template, request, redirect, url_for, session
+from pgfunc import fetch_data, insert_products, insert_sales,sales_per_day, sales_per_product, user_credentials, update_product
 import pygal
 
 # Create an object called app
@@ -7,6 +7,7 @@ import pygal
 # All HTML files are put inside "templates" folder
 # All CSS/JS/ Images are put inside "static" folder
 app = Flask(__name__)
+app.secret_key = "ken2020"
 
 # a route is an extension of url which loads you a html page
 # @ - a decorator(its in-built ) make something be static
@@ -36,6 +37,18 @@ def addproducts():
       insert_products(product)
       return redirect("/products")
    
+@app.route('/editproduct', methods=["POST", "GET"])
+def editproduct():
+    if request.method == "POST":
+      id = request.form['id']
+      name = request.form['name']
+      buying_price = request.form['buying_price']
+      selling_price = request.form['selling_price']
+      stock_quantity = request.form['stock_quantity']
+      product=(name,buying_price,selling_price,stock_quantity,id)
+      update_product(product)
+      return redirect("/products")
+    
 @app.route('/addsales', methods=["POST","GET"])
 def addsales():
    if request.method == "POST":
@@ -76,13 +89,33 @@ def dashboard():
 
 @app.route('/login', methods=["POST","GET"])
 def login():
+   if request.method == "POST":
+      user = request.form["email_address"]
+      session["user"] = user
+      return redirect(url_for("user"))
+   else:
+      if "name" in session:
+         return redirect(url_for("login"))
    login = user_credentials()
    email = []
    password = []
    for i in login:
          email, password = i
-         # print(email,password)
+         print(email,password)
    return render_template('login.html', login=login)
+
+@app.route('/user')
+def user():
+   if "user" in session:
+      user = session["user"]
+      return f"{user}"
+   else:
+      return redirect(url_for("login"))
+   
+@app.route('/logout')
+def logout():
+   session.pop("user", default=None)
+   return redirect(url_for("login"))
 
 @app.route('/register', methods=["POST","GET"])
 def register():

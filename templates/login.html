@@ -1,4 +1,6 @@
-{% extends "layout.html" %} {% block content %}
+{% extends "layout.html" %} 
+
+{% block content %}
 <div class="container">
   <div class="row">
     <div class="col-md-6 offset-md-3">
@@ -14,11 +16,11 @@
 
           <div class="mb-3">
             <label class="form-label" for="form2Example1">Email address:</label>
-            <input type="email" class="form-control" value="{{ request.form.email }}" id="email" aria-describedby="emailHelp" placeholder=""/>
+            <input type="email" class="form-control" name="email_address" id="email" aria-describedby="emailHelp" placeholder=""/>
           </div>
           <div class="mb-3">
             <label class="form-label" for="form2Example2">Password:</label>
-            <input type="password" class="form-control" value="{{ request.form.password }}" id="password" placeholder=""/>
+            <input type="password" class="form-control" name="password" id="password" placeholder=""/>
           </div>
 
           <div class="text-center">
