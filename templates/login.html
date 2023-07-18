@@ -1,12 +1,13 @@
-{% extends "layout.html" %} 
+{% extends "layout.html" %}
 
 {% block content %}
+
 <div class="container">
+  <h2 class="text-center text-dark mt-5">SwiftSell System</h2>
   <div class="row">
     <div class="col-md-6 offset-md-3">
-      <h2 class="text-center text-dark mt-5">Sales System</h2>
-      <div class="text-center mb-5 text-dark">Login Form</div>
-      <div class="card my-5">
+      
+        <div class="card my-2">
         <form
           action="/login" method="post"class="card-body cardbody-color p-lg-5">
           <div class="text-center">
@@ -16,17 +17,21 @@
 
           <div class="mb-3">
             <label class="form-label" for="form2Example1">Email address:</label>
-            <input type="email" class="form-control" name="email_address" id="email" aria-describedby="emailHelp" placeholder=""/>
+            <input type="email" class="form-control" name="email" id="id" aria-describedby="emailHelp" placeholder=""/>
           </div>
           <div class="mb-3">
             <label class="form-label" for="form2Example2">Password:</label>
-            <input type="password" class="form-control" name="password" id="password" placeholder=""/>
+            <input type="password" class="form-control" name="password" id="id" placeholder=""/>
           </div>
 
           <div class="text-center">
             <button type="submit" class="btn btn-color px-5 mb-5 w-100">Login</button>
           </div>
         </form>
+        <div class="card-footer">
+          <p>Don't have an account? <a href="/register">Register</a></p>
+        </div>
+
       </div>
     </div>
   </div>

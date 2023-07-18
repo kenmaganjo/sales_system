@@ -29,10 +29,11 @@
 
 
                     <div class="col-lg-4 col-md-6 col-sm-12">
+
                         <!-- Button trigger modal -->
                         <button type="button" class="btn btn-primary" data-bs-toggle="modal"
                             data-bs-target="#exampleModal">
-                            + Add New Item
+                            + Add A New Product
                         </button>
 
                         <!-- Modal -->
@@ -62,11 +63,7 @@
                                                 <input type="number" name="selling_price" class="form-control"
                                                     id="exampleInputPassword1">
                                             </div>
-                                            <div class="mb-3">
-                                                <label for="exampleInputID" class="form-label">Quantiy</label>
-                                                <input type="number" name="stock_quantity" class="form-control"
-                                                    id="exampleInputPassword1">
-                                            </div>
+
                                             <div>
                                                 <button type="submit" class="btn btn-md btn-success">Submit</button>
                                             </div>
@@ -75,6 +72,7 @@
                                         </form>
 
                                     </div>
+                                    
                                     
                                 </div>
                             </div>
@@ -95,8 +93,10 @@
                                 <th scope="col">NAME</th>
                                 <th scope="col">B.P</th>
                                 <th scope="col">S.P</th>
-                                <th scope="col">QUANTITY</th>
+                                <th scope="col">Remaing Stock</th>
+                                <th scope="col">Bar Code</th>
                                 <th scope="col">Edit</th>
+                                
                                 
             
                             </tr>
@@ -108,6 +108,14 @@
                                 <td>{{ row[1]}}</td>
                                 <td>{{ row[2]}}</td>
                                 <td>{{ row[3]}}</td>
+                                
+                                {% if remain_stock(row[0]) |int < 15 %}
+                                    <td style="background-color: red;">{{ remain_stock(row[0]) }}</td>
+                                {% elif remain_stock(row[0]) |int < 40 %}
+                                    <td style="background-color: yellow;">{{ remain_stock(row[0]) }}</td>
+                                {% else %}
+                                    <td style="background-color:green;">{{ remain_stock(row[0]) }}</td>
+                                {% endif %}</td>
                                 <td>{{ row[4]}}</td>
                                 <td>
                                     <button type="button" class="btn btn-primary" data-bs-toggle="modal"
@@ -119,14 +127,14 @@
                                     <div class="modal-dialog">
                                         <div class="modal-content">
                                             <div class="modal-header">
-                                                <h1 class="modal-title fs-5" id="exampleModal{{row[0]}}">Edit Product No: {{row[0]}}</h1>
+                                                <h1 class="modal-title fs-5" id="exampleModal{{row[0]}}">Edit Item:</h1>
                                                 <button type="button" class="btn-close" data-bs-dismiss="modal"
                                                     aria-label="Close"></button>
                                             </div>
                                             <div class="modal-body">
                                                 <form action="/editproduct" method="post">
                                                     <div class="mb-3">
-                                                        <label for="exampleInputID" class="form-label">ID</label>
+                                                        <label for="exampleInputID" class="form-label"></label>
                                                         <input type="hidden" name="id" class="form-control" value="{{row[0]}}"
                                                             id="exampleInputPassword1">
                                                     </div>
@@ -145,11 +153,7 @@
                                                         <input type="number" name="selling_price" class="form-control" value="{{row[3]}}"
                                                             id="exampleInputPassword1">
                                                     </div>
-                                                    <div class="mb-3">
-                                                        <label for="exampleInputID" class="form-label">Quantity</label>
-                                                        <input type="number" name="stock_quantity" class="form-control" value="{{row[4]}}"
-                                                            id="exampleInputPassword1">
-                                                    </div>
+
                                                     <div>
                                                         <button type="submit" class="btn btn-md btn-success">Update</button>
                                                     </div>

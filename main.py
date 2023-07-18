@@ -1,6 +1,11 @@
-from flask import Flask, render_template, request, redirect, url_for, session
-from pgfunc import fetch_data, insert_products, insert_sales,sales_per_day, sales_per_product, user_credentials, update_product
+from flask import Flask, render_template, request, redirect, url_for,flash,session,g
+import psycopg2
+from pgfunc import fetch_data, insert_products, insert_sales,sales_per_day, sales_per_product, user_credentials, get_users, update_product, insert_stock, remaining_stock, closing_stock
 import pygal
+from datetime import datetime, timedelta
+from functools import wraps
+conn = psycopg2.connect("dbname=myduka user=postgres password=1958")
+cur = conn.cursor()
 
 # Create an object called app
 # __name__ is used to tell Flask where to access HTML Files
@@ -11,31 +16,38 @@ app.secret_key = "ken2020"
 
 # a route is an extension of url which loads you a html page
 # @ - a decorator(its in-built ) make something be static
+
+def login_required(view_func):
+    @wraps(view_func)
+    def decorated_view(*args, **kwargs):
+        if not session.get('logged_in') and not session.get('registered'):
+            return redirect('/login') 
+        return view_func(*args, **kwargs)
+    return decorated_view
+
 @app.route("/")
+@login_required
 def home():
     return render_template("index.html")
 
 @app.route("/products")
+@login_required
 def products():
    prods = fetch_data("products")
    return render_template('products.html', products=prods)
-  
-@app.route("/sales")
-def sales():
-   sales = fetch_data("sales")
-   prods = fetch_data("products")
-   return render_template('sales.html', sales=sales, prods=prods)
-
+ 
 @app.route('/addproducts', methods=["POST","GET"])
 def addproducts():
    if request.method == "POST":
       name=request.form["name"]
       buying_price=request.form["buying_price"]
       selling_price=request.form["selling_price"]
-      stock_quantity=request.form["stock_quantity"]
-      product=(name,buying_price,selling_price,stock_quantity)
+      product=(name,buying_price,selling_price)
       insert_products(product)
+      flash("Success! The product has been added successfully!", category="success")
       return redirect("/products")
+   else:
+      flash("The product could not be added at this moment. Please try again.", category="error")
    
 @app.route('/editproduct', methods=["POST", "GET"])
 def editproduct():
@@ -44,10 +56,19 @@ def editproduct():
       name = request.form['name']
       buying_price = request.form['buying_price']
       selling_price = request.form['selling_price']
-      stock_quantity = request.form['stock_quantity']
-      product=(name,buying_price,selling_price,stock_quantity,id)
+      product=(name,buying_price,selling_price,id)
       update_product(product)
+      flash("Success! The product has been edited successfully!", category="success")
       return redirect("/products")
+    else:
+      flash("The product could not be edited at this moment. Please try again.", category="error")
+    
+@app.route("/sales")
+@login_required
+def sales():
+   sales = fetch_data("sales")
+   prods = fetch_data("products")
+   return render_template('sales.html', sales=sales, prods=prods)
     
 @app.route('/addsales', methods=["POST","GET"])
 def addsales():
@@ -56,9 +77,32 @@ def addsales():
       quantity=request.form["quantity"]
       sale=(pid,quantity,'now()')
       insert_sales(sale)
+      flash("Congratulations! The sale has been successfully completed!", category="success")
       return redirect("/sales")
+   else:
+      flash("The sale did not go through. Please try again.", category="error")
    
+@app.route("/stock")
+@login_required
+def stock():
+   stock = fetch_data("stock")
+   prods = fetch_data("products")
+   return render_template('stock.html', stock=stock, prods=prods)
+
+@app.route('/addstock', methods=["POST","GET"])
+def addstock():
+   if request.method == "POST":
+      pid=request.form["pid"]
+      quantity=request.form["quantity"]
+      stock=(pid,quantity,'now()')
+      insert_stock(stock)
+      flash("Success! The stock has been successfully added!", category="success")
+      return redirect("/stock")
+   else:
+      flash("The item could not be added at this moment. Please try again.", category="error")
+
 @app.route("/dashboard")
+@login_required
 def dashboard():
    # Line chart to show sales per day
    daily_sales = sales_per_day()
@@ -82,43 +126,103 @@ def dashboard():
    bar_chart.title = 'Sales per Product'
    bar_chart.x_labels = product_name
    bar_chart.add('Sales', sales)
-   # To get raw SVG data for the 2 graphs above, and passing them into the template.
+   # Bar graph to show remaining stock.
+   stock_data = remaining_stock()
+   product_names = []
+   stock_remaining = []
+   for pid, quantity in stock_data:
+      product_names.append('pid ' + str(pid)) 
+      stock_remaining.append(quantity)
+   bar_graph = pygal.Bar()
+   bar_graph.title = 'Remaining Stock'
+   bar_graph.x_labels = product_names
+   bar_graph.add('Stock', stock_remaining)
+
+   bar_graph = bar_graph.render_data_uri()
    chart = chart.render_data_uri()
    bar_chart = bar_chart.render_data_uri()
-   return render_template('dashboard.html', chart=chart, bar_chart=bar_chart)
+   return render_template('dashboard.html', chart=chart, bar_chart=bar_chart, bar_graph=bar_graph)
+# To add remaining stock field to the products table.
+@app.context_processor
+def inject_remaining_stock():
+    def remain_stock(product_id=None):
+        stock = closing_stock(cur, product_id)  # Pass the database cursor as an argument
+        return stock[0] if stock is not None else 0
+    return {'remain_stock': remain_stock}
+
+@app.route('/signup', methods=["POST", "GET"])
+def user_added():
+    if request.method == "POST":
+        full_name = request.form["full_name"]
+        email = request.form["email"]
+        password = request.form["password"]
+        confirm_password = request.form["confirm_password"]
+         # Validation checks before registration
+        if len(full_name) < 1:
+            flash('Full name must be greater than 1 character.', category='error')
+            return redirect("/register")
+        elif len(email) < 10:
+            flash('Email must be greater than 10 characters.', category='error')
+            return redirect("/register")
+        elif password != confirm_password:
+            flash('Passwords don\'t match. Please try again', category='error')
+            return redirect("/register")
+        elif len(password) < 6:
+            flash('Password must be at least 6 characters.', category='error')
+            return redirect("/register")
+        
+        # To check if the email already exists in the database
+        with conn.cursor() as cur:
+            cur.execute("SELECT COUNT(*) FROM users WHERE email = %s", (email,))
+            result = cur.fetchone()
+            if result[0] > 0:
+                flash('Email already exist! Please use another email!', category='error')
+                return redirect("/register")
+            else:
+                # Adding the new user to the database, after all checks are passed.
+                with conn.cursor() as cur:
+                    cur.execute(
+                        "INSERT INTO users (full_name, email, password, confirm_password, created_at) VALUES (%s, %s, %s, %s, now())",
+                        (full_name, email, password, confirm_password))
+                conn.commit()
+                flash('Account created successfully!', category='success')
+
+    session['registered'] = True
+    return render_template("index.html")
 
 @app.route('/login', methods=["POST","GET"])
 def login():
-   if request.method == "POST":
-      user = request.form["email_address"]
-      session["user"] = user
-      return redirect(url_for("user"))
-   else:
-      if "name" in session:
-         return redirect(url_for("login"))
-   login = user_credentials()
-   email = []
-   password = []
-   for i in login:
-         email, password = i
-         print(email,password)
-   return render_template('login.html', login=login)
+ 
+    if request.method == "POST":
+        email = request.form["email"]
+        password = request.form["password"]
+        users = get_users() 
+        if users:
+            for user in users:
+                db_email = user[0]
+                db_password = user[1]
 
-@app.route('/user')
-def user():
-   if "user" in session:
-      user = session["user"]
-      return f"{user}"
-   else:
-      return redirect(url_for("login"))
-   
+                if db_email == email and db_password == password:
+                     flash('Authentication successful!', category='success')
+                     session['logged_in'] = True
+                     return redirect("/")
+            else:
+               flash('Incorrect email or password, please try again.', category='error')
+               return redirect("/login")
+
+    return render_template("login.html")
+
+@app.route("/register") 
+def register():
+   return render_template('register.html')
+
+@app.route('/login')
+def login_page():
+    return render_template('login.html')
+
 @app.route('/logout')
 def logout():
-   session.pop("user", default=None)
-   return redirect(url_for("login"))
-
-@app.route('/register', methods=["POST","GET"])
-def register():
-   return render_template("register.html")
+    session.clear()
+    return redirect('/login')
 
 app.run(debug=True)

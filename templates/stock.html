@@ -1,6 +1,9 @@
 {% extends "layout.html" %}
 
 {% block content %}
+
+
+
     <div class="container">
         <div class="row">
             <div class="col-lg-3 col-md-6 col-sm-12">
@@ -25,6 +28,7 @@
             <div class="col-9">
                 <div class="row">
                     <div class="col-lg-4 col-md-6 col-sm-12">
+                        
 
                     </div>
                     <div class="col-lg-4 col-md-6 col-sm-12">
@@ -32,7 +36,7 @@
                         <!-- Button trigger modal -->
                         <button type="button" class="btn btn-primary" data-bs-toggle="modal"
                             data-bs-target="#exampleModal">
-                            + Add Sale
+                            + Add Stock
                         </button>
 
                         <!-- Modal -->
@@ -46,7 +50,7 @@
                                             aria-label="Close"></button>
                                     </div>
                                     <div class="modal-body">
-                                        <form action="/addsales" method="post">
+                                        <form action="/addstock" method="post">
 
                                             <div class="mb-3">
                                                 <label for="product" class="form-label">Choose a product</label>
@@ -99,19 +103,19 @@
                             </tr>
                         </thead>
                         <tbody>
-                            {% for sale in sales %}
+                            {% for x in stock %}
                             <tr>
-                                <th scope="row">{{ sale[0]}}</th>
+                                <th scope="row">{{ x[0]}}</th>
                                 <td name="pid" id="product">
                                     {% for i in prods %}
-                                        {% if i[0] == sale[1] %}
+                                        {% if i[0] == x[1] %}
                                             {{ i[1]}}
                                         {% endif %}
 
                                     {% endfor %}
                                 </td>
-                                <td>{{ sale[2]}}</td>
-                                <td>{{ sale[3]}}</td>
+                                <td>{{ x[2]}}</td>
+                                <td>{{ x[3]}}</td>
                             </tr>
                             {% endfor %}
 

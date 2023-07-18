@@ -27,10 +27,10 @@
     .sect-one {
       position: fixed;
       background-image: url("../static/img\ web\ 4-overlay\ \(2\).jpg");
-      height: 500px;
+      height: 400px;
       background-repeat: no-repeat;
       margin-top: 3%;
-      margin-left: 15%;
+      margin-left: 12%;
       position: relative;
     }
     .sect-one .part-one {
@@ -83,6 +83,23 @@
         color: rgb(237, 228, 210) ;
         list-style: none;
     }
+    .logout{
+        
+        margin-right: 5%;
+    }
+    .logout li{
+        text-decoration: none;
+        color: rgb(237, 228, 210) ;
+        list-style: none;
+    }
+    .about_system{
+        color:black;
+        font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+        font-style: normal;
+        font-size: 17px;
+       
+    }
+
    
     </style>
 
@@ -93,7 +110,7 @@
     <nav class="navbar navbar-expand-lg navbar-dark bg-info">
         <div class="container-fluid">
             <a class="navbar-brand" href="#">
-                IMS
+                <span style="font-style: italic;">SWIFT</span>
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
                 aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
@@ -101,7 +118,7 @@
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav">
-                  
+                    {% if session.logged_in or session.registered %}
                     <li class="nav-item">
                         <a class="nav-link" href="/">Home</a>
                     </li>
@@ -116,23 +133,51 @@
                         <a class="nav-link" href="products">products</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="">Stock</a>
+                        <a class="nav-link" href="stock">Stock</a>
                     </li>
+                    {% endif %}
                 </ul>
             </div>
             <div class="login">
+                {% if not session.logged_in and not session.registered %}
                 <li class="nav-item">
                     <a class="nav-link" href="login">Login</a>
                 </li>
+                {% endif %}
             </div>
             <div class="register">
+                {% if not session.logged_in and not session.registered %}
                 <li class="nav-item">
                     <a class="nav-link" href="register">Register</a>
                 </li>
+                {% endif %}
             </div>
+            
+            <div class="logout">
+            {% if session.logged_in or session.registered %}
+                <li class="nav-item">
+                    <a class="nav-link" href="logout">Logout</a>
+                </li>
+            </div>
+            {% endif %}
+        </div>
             
         </div>
     </nav>
+    {% with messages = get_flashed_messages(with_categories=true) %} {% if
+        messages %} {% for category, message in messages %} {% if category ==
+        'error' %}
+        <div class="alert alert-danger alter-dismissable fade show" role="alert">
+          {{ message }}
+          
+        </div>
+        {% else %}
+        <div class="alert alert-success alter-dismissable fade show" role="alert">
+          {{ message }}
+          
+        </div>
+        {% endif %} {% endfor %} {% endif %} {% endwith %}
+    
 
   {% block content %}
 
