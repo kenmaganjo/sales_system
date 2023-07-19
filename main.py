@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 from functools import wraps
 conn = psycopg2.connect("dbname=myduka user=postgres password=1958")
 cur = conn.cursor()
+from werkzeug.security import generate_password_hash, check_password_hash
 
 # Create an object called app
 # __name__ is used to tell Flask where to access HTML Files
@@ -152,6 +153,8 @@ def inject_remaining_stock():
         return stock[0] if stock is not None else 0
     return {'remain_stock': remain_stock}
 
+
+
 @app.route('/signup', methods=["POST", "GET"])
 def user_added():
     if request.method == "POST":
@@ -159,7 +162,8 @@ def user_added():
         email = request.form["email"]
         password = request.form["password"]
         confirm_password = request.form["confirm_password"]
-         # Validation checks before registration
+
+        # Validation checks before registration
         if len(full_name) < 1:
             flash('Full name must be greater than 1 character.', category='error')
             return redirect("/register")
@@ -172,47 +176,50 @@ def user_added():
         elif len(password) < 6:
             flash('Password must be at least 6 characters.', category='error')
             return redirect("/register")
-        
+
+        # Hash the password before storing it in the database
+        hashed_password = generate_password_hash(password)
+
         # To check if the email already exists in the database
         with conn.cursor() as cur:
             cur.execute("SELECT COUNT(*) FROM users WHERE email = %s", (email,))
             result = cur.fetchone()
             if result[0] > 0:
-                flash('Email already exist! Please use another email!', category='error')
+                flash('Email already exists! Please use another email!', category='error')
                 return redirect("/register")
             else:
                 # Adding the new user to the database, after all checks are passed.
                 with conn.cursor() as cur:
                     cur.execute(
                         "INSERT INTO users (full_name, email, password, confirm_password, created_at) VALUES (%s, %s, %s, %s, now())",
-                        (full_name, email, password, confirm_password))
+                        (full_name, email, hashed_password, confirm_password))
                 conn.commit()
                 flash('Account created successfully!', category='success')
 
     session['registered'] = True
     return render_template("index.html")
 
-@app.route('/login', methods=["POST","GET"])
+@app.route('/login', methods=["POST", "GET"])
 def login():
- 
     if request.method == "POST":
         email = request.form["email"]
         password = request.form["password"]
-        users = get_users() 
+        users = get_users()
         if users:
             for user in users:
                 db_email = user[0]
-                db_password = user[1]
+                db_password_hash = user[1]
 
-                if db_email == email and db_password == password:
-                     flash('Authentication successful!', category='success')
-                     session['logged_in'] = True
-                     return redirect("/")
+                if db_email == email and check_password_hash(db_password_hash, password):
+                    flash('Authentication has been successfully verified!', category='success')
+                    session['logged_in'] = True
+                    return redirect("/")
             else:
-               flash('Incorrect email or password, please try again.', category='error')
-               return redirect("/login")
+                flash('Incorrect email or password, please try again.', category='error')
+                return redirect("/login")
 
     return render_template("login.html")
+
 
 @app.route("/register") 
 def register():
@@ -225,6 +232,7 @@ def login_page():
 @app.route('/logout')
 def logout():
     session.clear()
+    flash('You have been logged out. Would you like to gain access? Kindly log in.', category='error')
     return redirect('/login')
 
 app.run(debug=True)

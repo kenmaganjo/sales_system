@@ -60,7 +60,7 @@ def insert_stock(v):
 
 # def user_credentials(full_name, email, password, confirm_password):
 def user_credentials():
-    q = "INSERT INTO users (full_name, email, password, confirm_password, created_at) VALUES (%s, %s, %s, %s, NOW());"
+    q = "INSERT INTO users (full_name, email, password,confrim_password, created_at) VALUES (%s, %s, %s, %s, NOW());"
     cur.execute(q)
     conn.commit()
     return q
@@ -70,6 +70,11 @@ def get_users():
     cur.execute(q)
     results = cur.fetchall()
     return results
+
+
+
+
+
 
 def remaining_stock():
     q = """SELECT 
