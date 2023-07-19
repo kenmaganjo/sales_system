@@ -73,13 +73,14 @@ def get_users():
 
 def remaining_stock():
     q = """SELECT 
-            s.pid,
+            p.name,
             COALESCE(s.stock_quantity, 0) - COALESCE(sa.sales_quantity, 0) AS closing_stock
             FROM
                 (SELECT pid, SUM(quantity) AS stock_quantity FROM stock GROUP BY pid) AS s
             LEFT JOIN
                 (SELECT pid, SUM(quantity) AS sales_quantity FROM sales GROUP BY pid) AS sa
-            ON s.pid = sa.pid;"""
+            ON s.pid = sa.pid
+            JOIN products p ON s.pid = p.id;"""
     cur.execute(q)
     results = cur.fetchall()
     return results

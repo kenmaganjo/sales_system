@@ -130,9 +130,11 @@ def dashboard():
    stock_data = remaining_stock()
    product_names = []
    stock_remaining = []
-   for pid, quantity in stock_data:
-      product_names.append('pid ' + str(pid)) 
-      stock_remaining.append(quantity)
+
+   for name, quantity in stock_data:
+        product_names.append(name)
+        stock_remaining.append(quantity)
+
    bar_graph = pygal.Bar()
    bar_graph.title = 'Remaining Stock'
    bar_graph.x_labels = product_names
