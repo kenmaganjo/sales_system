@@ -1,20 +1,18 @@
 from flask import Flask, render_template, request, redirect, url_for,flash,session,g
 import psycopg2
-from pgfunc import fetch_data, insert_products, insert_sales,sales_per_day, sales_per_product, user_credentials, get_users, update_product, insert_stock, remaining_stock, closing_stock
+from pgfunc import fetch_data, insert_products, insert_sales,sales_per_day, revenue_per_day,revenue_per_month, sales_per_product, user_credentials, get_users, update_product, insert_stock, remaining_stock, closing_stock
 import pygal
 from datetime import datetime, timedelta
 from functools import wraps
 conn = psycopg2.connect("dbname=myduka user=postgres password=1958")
 cur = conn.cursor()
 from werkzeug.security import generate_password_hash, check_password_hash
-
+app = Flask(__name__)
+app.secret_key = "ken2020"
 # Create an object called app
 # __name__ is used to tell Flask where to access HTML Files
 # All HTML files are put inside "templates" folder
 # All CSS/JS/ Images are put inside "static" folder
-app = Flask(__name__)
-app.secret_key = "ken2020"
-
 # a route is an extension of url which loads you a html page
 # @ - a decorator(its in-built ) make something be static
 
@@ -70,19 +68,33 @@ def sales():
    sales = fetch_data("sales")
    prods = fetch_data("products")
    return render_template('sales.html', sales=sales, prods=prods)
-    
-@app.route('/addsales', methods=["POST","GET"])
+
+@app.route('/addsales', methods=["POST", "GET"])
 def addsales():
-   if request.method == "POST":
-      pid=request.form["pid"]
-      quantity=request.form["quantity"]
-      sale=(pid,quantity,'now()')
-      insert_sales(sale)
-      flash("Congratulations! The sale has been successfully completed!", category="success")
-      return redirect("/sales")
-   else:
-      flash("The sale did not go through. Please try again.", category="error")
-   
+    if request.method == "POST":
+        pid_from_form = int(request.form["pid"])
+        quantity = int(request.form["quantity"])
+        # Retrieve the remaining stock for all products as a list of dictionaries
+        remaining_stock_results = remaining_stock()
+        # Convert the list of dictionaries to a dictionary with "pid" as key and "closing_stock" as value
+        remaining_stock_dict = {result["pid"]: result["closing_stock"] for result in remaining_stock_results}
+        if pid_from_form not in remaining_stock_dict:
+            flash("The product is out of stock. Kindly restock.", category="error")
+            return redirect("/sales")
+        available_stock = remaining_stock_dict[pid_from_form]
+        if quantity > available_stock:
+            flash("The quantity you have entered exceeds our current stock. Kindly input a valid quantity within the available stock limit.", category="error")
+            return redirect("/sales")
+        else:
+     
+            sale = (pid_from_form, quantity, 'now()')
+            insert_sales(sale)
+            flash("Congratulations! The sale has been successfully completed!", category="success")
+            return redirect("/sales")
+    else:
+        flash("The sale did not go through. Please try again.", category="error")
+        return redirect("/sales")
+
 @app.route("/stock")
 @login_required
 def stock():
@@ -105,7 +117,7 @@ def addstock():
 @app.route("/dashboard")
 @login_required
 def dashboard():
-   # Line chart to show sales per day
+   #Line chart to show sales quantity per day
    daily_sales = sales_per_day()
    dates = []
    sales = []
@@ -113,10 +125,10 @@ def dashboard():
       dates.append(i[0])
       sales.append(i[1])
    chart = pygal.Line()
-   chart.title = "Sales per Day"
+   chart.title = "Sales Quantity per Day"
    chart.x_labels = dates
    chart.add("Sales", sales)
-   # Bar chart to show sales per product
+   #Chart to show sales quantity per product
    product_sale = sales_per_product()
    product_name = []
    sales = []
@@ -124,36 +136,64 @@ def dashboard():
       product_name.append(i[0])
       sales.append(i[1])
    bar_chart = pygal.Bar()
-   bar_chart.title = 'Sales per Product'
+   bar_chart.title = 'Sales Quantity per Product'
    bar_chart.x_labels = product_name
    bar_chart.add('Sales', sales)
-   # Bar graph to show remaining stock.
+   #Graph to show remaining stock.
    stock_data = remaining_stock()
    product_names = []
    stock_remaining = []
-
-   for name, quantity in stock_data:
-        product_names.append(name)
-        stock_remaining.append(quantity)
-
+   for data in stock_data:
+        product_name = data.get('name')  
+        closing_stock = int(data.get('closing_stock', 0))  
+        if product_name:
+            product_names.append(product_name)
+            stock_remaining.append(closing_stock)
    bar_graph = pygal.Bar()
-   bar_graph.title = 'Remaining Stock'
+   bar_graph.title = 'Remaining Stock per Product'
    bar_graph.x_labels = product_names
-   bar_graph.add('Stock', stock_remaining)
+   bar_graph.add('Stock(Qty)', stock_remaining)
+   #Graph to show revenue per day
+   daily_revenue = revenue_per_day()
+   dates = []
+   sales_revenue_per_day = [] 
+   for i in daily_revenue:
+    dates.append(i[0])
+    sales_revenue_per_day.append(i[1]) 
+   line_chart = pygal.Line()
+   line_chart.title = "Sales Revenue per Day"
+   line_chart.x_labels = dates
+   line_chart.add("Revenue(KSh)", sales_revenue_per_day)
+   #Graph to show revenue per month
+   monthly_revenue = revenue_per_month()
+   dates = []
+   sales_revenue_per_month = [] 
+   for i in monthly_revenue:
+    dates.append(i[0])
+    sales_revenue_per_month.append(i[1]) 
+   line_graph = pygal.Line()
+   line_graph.title = "Sales Revenue per Month"
+   line_graph.x_labels = dates
+   line_graph.add("Revenue(KSh)", sales_revenue_per_month)
 
+   line_graph = line_graph.render_data_uri()
+   line_chart = line_chart.render_data_uri()
    bar_graph = bar_graph.render_data_uri()
    chart = chart.render_data_uri()
    bar_chart = bar_chart.render_data_uri()
-   return render_template('dashboard.html', chart=chart, bar_chart=bar_chart, bar_graph=bar_graph)
+   return render_template('dashboard.html', chart=chart, bar_chart=bar_chart, bar_graph=bar_graph, line_chart=line_chart, line_graph=line_graph)
 # To add remaining stock field to the products table.
 @app.context_processor
 def inject_remaining_stock():
     def remain_stock(product_id=None):
-        stock = closing_stock(cur, product_id)  # Pass the database cursor as an argument
-        return stock[0] if stock is not None else 0
+        stock = closing_stock(cur, product_id) 
+        return stock if stock is not None else 0
     return {'remain_stock': remain_stock}
 
-
+@app.context_processor
+def inject_datetime():
+    now = datetime.now()
+    return {'current_date': now.strftime('%d-%m-%Y'), 'current_time': now.strftime('%H:%M:%S')}
 
 @app.route('/signup', methods=["POST", "GET"])
 def user_added():
@@ -162,7 +202,6 @@ def user_added():
         email = request.form["email"]
         password = request.form["password"]
         confirm_password = request.form["confirm_password"]
-
         # Validation checks before registration
         if len(full_name) < 1:
             flash('Full name must be greater than 1 character.', category='error')
@@ -176,10 +215,9 @@ def user_added():
         elif len(password) < 6:
             flash('Password must be at least 6 characters.', category='error')
             return redirect("/register")
-
         # Hash the password before storing it in the database
         hashed_password = generate_password_hash(password)
-
+        hashed_password = generate_password_hash(confirm_password)
         # To check if the email already exists in the database
         with conn.cursor() as cur:
             cur.execute("SELECT COUNT(*) FROM users WHERE email = %s", (email,))
@@ -192,10 +230,9 @@ def user_added():
                 with conn.cursor() as cur:
                     cur.execute(
                         "INSERT INTO users (full_name, email, password, confirm_password, created_at) VALUES (%s, %s, %s, %s, now())",
-                        (full_name, email, hashed_password, confirm_password))
+                        (full_name, email, hashed_password, hashed_password))
                 conn.commit()
                 flash('Account created successfully!', category='success')
-
     session['registered'] = True
     return render_template("index.html")
 
@@ -223,7 +260,6 @@ def login():
 @app.errorhandler(404)
 def page_not_found(error):
     return render_template('page_not_found.html'),404
-    
 
 @app.route("/register") 
 def register():

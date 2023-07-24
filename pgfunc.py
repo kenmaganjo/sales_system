@@ -38,6 +38,18 @@ def sales_per_day():
     results = cur.fetchall()
     return results
 
+def revenue_per_day():
+    q = "SELECT TO_CHAR(s.created_at, 'DD-MM-YYYY') AS sale_month, SUM(s.quantity * p.selling_price) AS revenue FROM sales s JOIN products p ON s.pid = p.id GROUP BY TO_CHAR(s.created_at, 'DD-MM-YYYY');;"
+    cur.execute(q)
+    results = cur.fetchall()
+    return results
+
+def revenue_per_month():
+    q = "SELECT TO_CHAR(s.created_at, 'MM-YYYY') AS sale_month, SUM(s.quantity * p.selling_price) AS revenue FROM sales s JOIN products p ON s.pid = p.id GROUP BY TO_CHAR(s.created_at, 'MM-YYYY');"
+    cur.execute(q)
+    results = cur.fetchall()
+    return results
+
 def sales_per_product():
     q = "SELECT * FROM sales_per_product;"
     cur.execute(q)
@@ -58,7 +70,6 @@ def insert_stock(v):
     conn.commit()
     return q
 
-# def user_credentials(full_name, email, password, confirm_password):
 def user_credentials():
     q = "INSERT INTO users (full_name, email, password,confrim_password, created_at) VALUES (%s, %s, %s, %s, NOW());"
     cur.execute(q)
@@ -71,14 +82,9 @@ def get_users():
     results = cur.fetchall()
     return results
 
-
-
-
-
-
 def remaining_stock():
     q = """SELECT 
-            p.name,
+            p.name, p.id as pid,
             COALESCE(s.stock_quantity, 0) - COALESCE(sa.sales_quantity, 0) AS closing_stock
             FROM
                 (SELECT pid, SUM(quantity) AS stock_quantity FROM stock GROUP BY pid) AS s
@@ -88,25 +94,34 @@ def remaining_stock():
             JOIN products p ON s.pid = p.id;"""
     cur.execute(q)
     results = cur.fetchall()
-    return results
+    # Convert the list of tuples to a list of dictionaries
+    column_names = [desc[0] for desc in cur.description]
+    results_as_dicts = [dict(zip(column_names, row)) for row in results]
+    return results_as_dicts
 
 def closing_stock(cur, product_id=None):
-    q = """ SELECT 
-            
-            COALESCE(s.stock_quantity, 0) - COALESCE(sa.sales_quantity, 0) AS closing_stock
-            FROM
-                (SELECT pid, SUM(quantity) AS stock_quantity FROM stock GROUP BY pid) AS s
-            LEFT JOIN
-                (SELECT pid, SUM(quantity) AS sales_quantity FROM sales GROUP BY pid) AS sa
-            ON s.pid = sa.pid
-            WHERE s.pid = %s
-            GROUP BY s.stock_quantity,sa.sales_quantity;"""
-    cur.execute(q, (product_id,))
-    results = cur.fetchall()
-    if results:
-        return results[0]
+    q = """
+    SELECT
+        COALESCE(s.stock_quantity, 0) - COALESCE(sa.sales_quantity, 0) AS closing_stock
+    FROM
+        (SELECT pid, SUM(quantity) AS stock_quantity FROM stock GROUP BY pid) AS s
+    LEFT JOIN
+        (SELECT pid, SUM(quantity) AS sales_quantity FROM sales GROUP BY pid) AS sa
+    ON s.pid = sa.pid
+    """
+    if product_id is not None:
+        q += " WHERE s.pid = %s"
+        cur.execute(q, (product_id,))
     else:
-        return None
+        cur.execute(q)
+
+    result = cur.fetchone()
+    return result[0] if result else 0
+
+
+
+
+    
 
    
         
