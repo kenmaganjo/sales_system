@@ -193,7 +193,7 @@ def inject_remaining_stock():
 @app.context_processor
 def inject_datetime():
     now = datetime.now()
-    return {'current_date': now.strftime('%d-%m-%Y'), 'current_time': now.strftime('%H:%M:%S')}
+    return {'current_date': now.strftime('%d-%m-%Y'), 'current_time': now.strftime('%I:%M:%S %p')}
 
 @app.route('/signup', methods=["POST", "GET"])
 def user_added():
