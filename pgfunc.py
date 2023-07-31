@@ -118,7 +118,11 @@ def closing_stock(cur, product_id=None):
     result = cur.fetchone()
     return result[0] if result else 0
 
-
+def product_id():
+    q = "SELECT id FROM products;"
+    cur.execute(q)
+    results = cur.fetchall()
+    return results
 
 
     

@@ -1,14 +1,23 @@
-from flask import Flask, render_template, request, redirect, url_for,flash,session,g
+from flask import Flask, render_template, request, redirect, url_for,flash,session,send_file
 import psycopg2
-from pgfunc import fetch_data, insert_products, insert_sales,sales_per_day, revenue_per_day,revenue_per_month, sales_per_product, user_credentials, get_users, update_product, insert_stock, remaining_stock, closing_stock
+from pgfunc import fetch_data, insert_products, insert_sales,sales_per_day, revenue_per_day,revenue_per_month, sales_per_product, user_credentials, get_users, update_product, insert_stock, remaining_stock, closing_stock, product_id
 import pygal
 from datetime import datetime, timedelta
 from functools import wraps
+import barcode
+from PIL import Image
+from barcode import generate
+from barcode import Code128
+from barcode.writer import ImageWriter
+import os
+import pandas as pd
 conn = psycopg2.connect("dbname=myduka user=postgres password=1958")
 cur = conn.cursor()
 from werkzeug.security import generate_password_hash, check_password_hash
+
 app = Flask(__name__)
 app.secret_key = "ken2020"
+
 # Create an object called app
 # __name__ is used to tell Flask where to access HTML Files
 # All HTML files are put inside "templates" folder
@@ -25,7 +34,6 @@ def login_required(view_func):
     return decorated_view
 
 @app.route("/")
-@login_required
 def home():
     return render_template("index.html")
 
@@ -182,7 +190,7 @@ def dashboard():
    chart = chart.render_data_uri()
    bar_chart = bar_chart.render_data_uri()
    return render_template('dashboard.html', chart=chart, bar_chart=bar_chart, bar_graph=bar_graph, line_chart=line_chart, line_graph=line_graph)
-# To add remaining stock field to the products table.
+
 @app.context_processor
 def inject_remaining_stock():
     def remain_stock(product_id=None):
@@ -195,6 +203,19 @@ def inject_datetime():
     now = datetime.now()
     return {'current_date': now.strftime('%d-%m-%Y'), 'current_time': now.strftime('%I:%M:%S %p')}
 
+@app.context_processor
+def generate_barcode():
+    ids = product_id()
+    barcode_paths = [f"static/barcode/{pid}.png" for pid_tuple in ids
+                     for pid in [pid_tuple[0]]
+                     if isinstance(pid_tuple[0], int)] 
+
+    for pid_tuple, barcode_path in zip(ids, barcode_paths):
+        pid = pid_tuple[0]
+        code = Code128(str(pid), writer=ImageWriter())
+        code.save(barcode_path)
+    return {'generate_barcode': generate_barcode}
+   
 @app.route('/signup', methods=["POST", "GET"])
 def user_added():
     if request.method == "POST":
@@ -257,6 +278,45 @@ def login():
 
     return render_template("login.html")
 
+@app.route('/export', methods=['POST'])
+def export_data():
+    prods = fetch_data("products")
+    # Creating a DataFrame from the retrieved data
+    df = pd.DataFrame(prods, columns=["id", "name", "buying_price", "selling_price", "bar_code"])
+     # Convert numeric columns to numeric format
+    numeric_columns = ["buying_price", "selling_price"]
+    df[numeric_columns] = df[numeric_columns].apply(pd.to_numeric)
+    df = df.sort_values(by="id")
+    file_path = os.path.join("downloads", "exported_products.xlsx")
+    df.to_excel(file_path, index=False)
+    return send_file(file_path, as_attachment=True)
+
+@app.route('/import', methods=['POST'])
+def import_data():
+    if 'file' not in request.files:
+        return "No file part" 
+    file = request.files['file']    
+    if file.filename == '':
+        return "No selected file"
+    if file:    
+        file_path = os.path.join("uploads", file.filename)
+        file.save(file_path)
+        df = pd.read_excel(file_path)
+        #Insert data into the "products" table
+        for index, row in df.iterrows():
+            values = (row['name'], row['buying_price'], row['selling_price'])
+            insert_products(values)
+        os.remove(file_path)
+        flash('Data imported successfully!', category='success')
+        return redirect("/products")
+    return "Import failed"
+
+if not os.path.exists('uploads'):
+        os.makedirs('uploads')
+
+if not os.path.exists('downloads'):
+        os.makedirs('downloads')
+
 @app.errorhandler(404)
 def page_not_found(error):
     return render_template('page_not_found.html'),404
@@ -272,7 +332,11 @@ def login_page():
 @app.route('/logout')
 def logout():
     session.clear()
-    flash('You have been logged out. Would you like to gain access? Kindly log in.', category='error')
-    return redirect('/login')
+    flash('"You have been logged out. To regain access, please log in."', category='error')
+    return redirect('/')       
+
 
 app.run(debug=True)
+
+
+

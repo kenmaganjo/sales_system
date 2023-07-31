@@ -27,7 +27,13 @@
             <div class="col-9">
                 <div class="row">
                     <div class="col-lg-4 col-md-6 col-sm-12">
-
+                        <div class="modal-body">
+                            <h4>Export Excel Data</h4>
+                            <form action="/export" method="post">
+                                <input type="submit" value="Export Data">
+                            </form>
+                    
+                        </div>
                     </div>
 
 
@@ -82,7 +88,15 @@
                         </div>
                     </div>
                 <div class="col-lg-4 col-md-6 col-sm-12">
-
+                    <div class="modal-body">
+                        <h4>Import Excel Data</h4>
+                        <form id="importForm" action="/import" method="post" enctype="multipart/form-data">
+                            <input type="file" name="file" id="fileInput"><br><br>
+                            <button type="button" onclick="removeFile()">Remove</button><br><br>
+                            <input type="submit" value="Upload" id="uploadButton" style="display: none;">
+                        </form><br>
+                
+                    </div>
                 
                 </div>
 
@@ -119,7 +133,10 @@
                                 {% else %}
                                     <td style="background-color:green;">{{ remain_stock(row[0]) }}</td>
                                 {% endif %}</td>
-                                <td>{{ row[4]}}</td>
+                                <td>
+                                    <img src="{{ url_for('static', filename='barcode/' + row[0]|string + '.png.png') }}" alt="Barcode">
+                            </td>
+                  
                                 <td>
                                     <button type="button" class="btn btn-primary" data-bs-toggle="modal"
                                         data-bs-target="#exampleModal{{row[0]}}">
