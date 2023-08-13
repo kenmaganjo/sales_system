@@ -1,8 +1,8 @@
 from flask import Flask, render_template, request, redirect, url_for,flash,session,send_file
 import psycopg2
-from pgfunc import fetch_data, insert_products, insert_sales,sales_per_day, revenue_per_day,revenue_per_month, sales_per_product, user_credentials, get_users, update_product, insert_stock, remaining_stock, closing_stock, product_id
+from pgfunc import fetch_data, insert_products, insert_sales,sales_per_day, revenue_per_day,revenue_per_month, sales_per_product, user_credentials, get_users, update_product, insert_stock, remaining_stock, closing_stock, product_id, insert_expense, update_expense, net_profit_per_day, net_profit_per_month
 import pygal
-from datetime import datetime, timedelta
+from datetime import datetime
 from functools import wraps
 import barcode
 from PIL import Image
@@ -122,6 +122,45 @@ def addstock():
    else:
       flash("The item could not be added at this moment. Please try again.", category="error")
 
+@app.route("/expenses")
+@login_required
+def expenses():
+    expenses = fetch_data("expenses")   
+    return render_template('expenses.html',expenses=expenses)
+
+@app.route('/addexpense', methods=["POST"])
+def addexpense():
+    if request.method == "POST":
+        name = request.form["name"]
+        if name == "add_new":
+            name = request.form["new_name"]
+        category = request.form["category"]               
+        if category == "add_new":
+            category = request.form["new_category"]            
+        amount = request.form["amount"]
+        expense = (name, category, amount,'now()')
+        insert_expense(expense) 
+        flash("Success! The expense has been successfully added!", category="success")
+        return redirect("/expenses")
+    else:
+        flash("The expense could not be added at this moment. Please try again.", category="error")
+        return redirect("/expenses")
+
+@app.route('/editexpense', methods=["POST"])
+def editexpense():
+    if request.method == "POST":
+        id = request.form['id']
+        name = request.form['name']
+        category = request.form['category']
+        amount = request.form['amount']
+        expense = (name, category, amount, id)
+        update_expense(expense) 
+        flash("Success! The expense has been edited successfully!", category="success")
+        return redirect("/expenses")
+    else:
+        flash("The expense could not be edited at this moment. Please try again.", category="error")
+        return redirect("/expenses")
+
 @app.route("/dashboard")
 @login_required
 def dashboard():
@@ -171,7 +210,18 @@ def dashboard():
    line_chart = pygal.Line()
    line_chart.title = "Sales Revenue per Day"
    line_chart.x_labels = dates
-   line_chart.add("Revenue(KSh)", sales_revenue_per_day)
+   line_chart.add("Revenue(KSh)", sales_revenue_per_day)  
+   #Graph to show Net Profit per day
+   daily_net_profit = net_profit_per_day()
+   dates = []
+   net_profit = []
+   for entry in daily_net_profit:
+    dates.append(entry[0])
+    net_profit.append(entry[1])
+   chart_line = pygal.Line()
+   chart_line.title = "Net Profit per Day"
+   chart_line.x_labels = dates
+   chart_line.add("Net Profit(KSh)", net_profit)
    #Graph to show revenue per month
    monthly_revenue = revenue_per_month()
    dates = []
@@ -183,13 +233,26 @@ def dashboard():
    line_graph.title = "Sales Revenue per Month"
    line_graph.x_labels = dates
    line_graph.add("Revenue(KSh)", sales_revenue_per_month)
+   #Graph to show net profit per month
+   monthly_net_profit = net_profit_per_month()
+   months = []
+   net_profit = []
+   for entry in monthly_net_profit:
+    months.append(entry[0])
+    net_profit.append(entry[1])
+    line_graphs = pygal.Line()
+    line_graphs.title = "Net Profit per Month"
+    line_graphs.x_labels = months
+    line_graphs.add("Net Profit(KSh)", net_profit)
 
+   line_graphs =line_graphs.render_data_uri()
+   chart_line = chart_line.render_data_uri()
    line_graph = line_graph.render_data_uri()
    line_chart = line_chart.render_data_uri()
    bar_graph = bar_graph.render_data_uri()
    chart = chart.render_data_uri()
    bar_chart = bar_chart.render_data_uri()
-   return render_template('dashboard.html', chart=chart, bar_chart=bar_chart, bar_graph=bar_graph, line_chart=line_chart, line_graph=line_graph)
+   return render_template('dashboard.html',chart=chart, bar_chart=bar_chart, bar_graph=bar_graph, line_chart=line_chart, line_graph=line_graph, chart_line=chart_line, line_graphs=line_graphs)
 
 @app.context_processor
 def inject_remaining_stock():

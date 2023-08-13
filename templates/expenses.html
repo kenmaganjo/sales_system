@@ -1,0 +1,185 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+
+
+    <div class="container">
+        <div class="row">
+            <div class="row">
+                <div class="col-lg-3 col-md-6 col-sm-12">
+                    <div class="card" style="width: 16rem;">
+                        <div class="card-header">
+                            <i class="fa-solid fa-bars"></i> Nav Menu
+    
+    
+                        </div>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item"><a href="dashboard"><i class="fa-solid fa-gauge-high"></i> Dashboard</a></li>
+                            <li class="list-group-item"><a href="sales"><i class="fa-sharp fa-solid fa-warehouse"></i> Sales</a></li>
+                            <li class="list-group-item"><a href="products"><i class="fa-brands fa-salesforce"></i> Products</a></li>
+                            <li class="list-group-item"><a href="stock"><i class="fa-sharp fa-solid fa-layer-group"></i> Stock</a></li>
+                            <li class="list-group-item"><a href="/expenses"><i class="fa-solid fa-money-bill-wave"></i> Expenses</a></li>
+                        </ul>
+                        
+    
+    
+                    </div>
+    
+                </div>
+            <div class="col-9">
+                <div class="row">
+                    <div class="col-lg-4 col-md-6 col-sm-12">
+                        
+
+                    </div>
+                    <div class="col-lg-4 col-md-6 col-sm-12">
+
+                        <!-- Button trigger modal -->
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal"
+                            data-bs-target="#exampleModal">
+                            + Add Expense
+                        </button>
+
+                        <!-- Modal -->
+                        <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel"
+                            aria-hidden="true">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h1 class="modal-title fs-5" id="exampleModalLabel">Add Item:</h1>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                            aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <form action="/addexpense" method="post">
+                                            <div class="mb-3">
+                                                <label for="name" class="form-label">Expense Name</label>
+                                                <select name="name">
+                                                    {% for x in expenses %}
+                                                    <option value="{{ x[1] }}">{{ x[1] }}</option>
+                                                    {% endfor %}
+                                                    <option value="add_new">Add New Expense</option>
+                                                </select>
+                                                <input type="text" name="new_name" class="form-control mt-2" placeholder="New Expense Name" style="display: none;">
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="category" class="form-label">Category</label>
+                                                <select name="category">
+                                                    {% for x in expenses %}
+                                                    <option value="{{ x[2] }}">{{ x[2] }}</option>
+                                                    {% endfor %}
+                                                    <option value="add_new">Add New Category</option>
+                                                </select>
+                                                <input type="text" name="new_category" class="form-control mt-2" placeholder="New Category" style="display: none;">
+                                            </div>
+                                            
+                                            <div class="mb-3">
+                                                <label for="amount" class="form-label">Amount</label>
+                                                <input type="number" name="amount" class="form-control" step="0.01" required>
+                                            </div>
+                                            <div>
+                                                <button type="submit" class="btn btn-md btn-success">Submit</button>
+                                            </div>
+                                        </form>
+                                        
+
+                                    </div>
+                                    
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-4 col-md-6 col-sm-12">
+
+
+                    </div>
+
+
+                </div>
+                <div class="row">
+
+                    <table id="myTable" class="table">
+                        <thead>
+                            <tr>
+                                <th scope="col">ID</th>
+                                <th scope="col">Expense Name</th>
+                                <th scope="col">Expense Category</th>
+				                <th scope="col">Amount</th>
+                                <th scope="col">CREATED_AT</th>
+                                <th scope="col">Edit</th>
+
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for x in expenses %}
+                            <tr>
+                                <th scope="row">{{ x[0]}}</th>
+                                <td>{{ x[1]}}</td>
+                                <td>{{ x[2]}}</td>
+                                <td>{{ x[3]}}</td>
+                                <td>{{ x[4]}}</td>
+                                <td>
+                                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editExpenseModal{{ x[0] }}">
+                                        Edit Expense
+                                    </button>
+                                    <div class="modal fade" id="editExpenseModal{{ x[0] }}" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                                        <div class="modal-dialog">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <h1 class="modal-title fs-5" id="editExpenseModal{{ x[0] }}">Edit Expense:</h1>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <form action="/editexpense" method="post">
+                                                        <div class="mb-3">
+                                                            <label for="exampleInputID" class="form-label"></label>
+                                                            <input type="hidden" name="id" class="form-control" value="{{ x[0] }}">
+                                                        </div>
+                                                        <div class="mb-3">
+                                                            <label for="exampleInputName" class="form-label">Expense Name</label>
+                                                            <select name="name">
+                                                                {% for x in expenses %}
+                                                                <option value="{{ x[1] }}">{{ x[1] }}</option>
+                                                                {% endfor %}
+                                                                
+                                                            </select>
+                                                        </div>
+                                                        <div class="mb-3">
+                                                            <label for="exampleInputCategory" class="form-label">Category</label>
+                                                            <select name="category">
+                                                                {% for x in expenses %}
+                                                                <option value="{{ x[2] }}">{{ x[2] }}</option>
+                                                                {% endfor %}
+                                                                
+                                                            </select>
+                                                        </div>
+                                                        <div class="mb-3">
+                                                            <label for="exampleInputAmount" class="form-label">Amount</label>
+                                                            <input type="number" name="amount" class="form-control" step="0.01" value="{{ x[3] }}">
+                                                        </div>
+                                                        <div>
+                                                            <button type="submit" class="btn btn-md btn-success">Update</button>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                                
+                            </tr>
+                            {% endfor %}
+
+                        </tbody>
+                    </table>
+
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+
+

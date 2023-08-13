@@ -39,13 +39,61 @@ def sales_per_day():
     return results
 
 def revenue_per_day():
-    q = "SELECT TO_CHAR(s.created_at, 'DD-MM-YYYY') AS sale_month, SUM(s.quantity * p.selling_price) AS revenue FROM sales s JOIN products p ON s.pid = p.id GROUP BY TO_CHAR(s.created_at, 'DD-MM-YYYY') ORDER BY TO_CHAR(s.created_at, 'DD-MM-YYYY');"
+    q = "SELECT TO_CHAR(DATE(s.created_at), 'DD-MM-YYYY') AS sale_date, SUM(s.quantity * p.selling_price) AS revenue FROM sales s JOIN products p ON s.pid = p.id GROUP BY DATE(s.created_at) ORDER BY DATE(s.created_at) DESC;"
+    cur.execute(q)
+    results = cur.fetchall()
+    return results
+
+def net_profit_per_day():
+    q = """SELECT
+        transaction_date,
+        gross_profit - COALESCE(SUM(amount), 0) AS net_profit
+        FROM (
+        SELECT
+            DATE(s.created_at) AS transaction_date,
+            SUM(s.quantity * (p.selling_price - p.buying_price)) AS gross_profit
+        FROM sales s
+        JOIN products p ON s.pid = p.id
+        GROUP BY DATE(s.created_at)
+        ) AS gross_profit_table
+        LEFT JOIN expenses e ON gross_profit_table.transaction_date = DATE(e.created_at)
+        GROUP BY gross_profit_table.transaction_date, gross_profit
+        ORDER BY gross_profit_table.transaction_date DESC;"""
+    cur.execute(q)
+    results = cur.fetchall()
+    return results
+
+def net_profit_per_month():
+    q = """WITH MonthlyExpenses AS (
+        SELECT TO_CHAR(created_at, 'MM-YYYY') AS month,
+           SUM(amount) AS expenses
+        FROM expenses
+        GROUP BY TO_CHAR(created_at, 'MM-YYYY')
+        ),
+        MonthlyRevenue AS (
+        SELECT TO_CHAR(s.created_at, 'MM-YYYY') AS month,
+           SUM(s.quantity * p.selling_price) AS revenue,
+           SUM(s.quantity * p.buying_price) AS cogs
+        FROM sales s
+        JOIN products p ON s.pid = p.id
+        GROUP BY TO_CHAR(s.created_at, 'MM-YYYY')
+        )
+        SELECT m.month,
+            COALESCE(r.revenue, 0) - COALESCE(e.expenses, 0) - COALESCE(r.cogs, 0) AS net_profit
+        FROM (
+            SELECT DISTINCT month FROM MonthlyExpenses
+        UNION
+            SELECT DISTINCT month FROM MonthlyRevenue
+        ) m
+        LEFT JOIN MonthlyRevenue r ON m.month = r.month
+        LEFT JOIN MonthlyExpenses e ON m.month = e.month
+        ORDER BY m.month DESC;"""
     cur.execute(q)
     results = cur.fetchall()
     return results
 
 def revenue_per_month():
-    q = "SELECT TO_CHAR(s.created_at, 'MM-YYYY') AS sale_month, SUM(s.quantity * p.selling_price) AS revenue FROM sales s JOIN products p ON s.pid = p.id GROUP BY TO_CHAR(s.created_at, 'MM-YYYY') ORDER BY TO_CHAR(s.created_at, 'MM-YYYY');"
+    q = "SELECT TO_CHAR(s.created_at, 'MM-YYYY') AS sale_month, SUM(s.quantity * p.selling_price) AS revenue FROM sales s JOIN products p ON s.pid = p.id GROUP BY TO_CHAR(s.created_at, 'MM-YYYY') ORDER BY TO_CHAR(s.created_at, 'MM-YYYY') DESC;"
     cur.execute(q)
     results = cur.fetchall()
     return results
@@ -67,6 +115,20 @@ def insert_stock(v):
     q = "insert into stock(pid,quantity,created_at) "\
         "values" + vs
     cur.execute(q)
+    conn.commit()
+    return q
+
+def insert_expense(v):
+    vs = str(v)
+    q = "insert into expenses(name,category,amount,created_at) "\
+        "values" + vs
+    cur.execute(q)
+    conn.commit()
+    return q
+
+def update_expense(p):
+    q = "UPDATE expenses SET name = %s, category = %s, amount = %s WHERE id = %s;"
+    cur.execute(q,p)
     conn.commit()
     return q
 
