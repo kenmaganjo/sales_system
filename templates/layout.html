@@ -204,6 +204,32 @@
   {% endblock %}
 
   <script>
+  document.addEventListener("DOMContentLoaded", function() {
+    var defaultGraph = "line_chart"; 
+    displaySelectedGraph(defaultGraph);
+
+    document.getElementById("graphSelector").addEventListener("change", function() {
+        var selectedGraph = this.value;
+        displaySelectedGraph(selectedGraph);
+    });
+});
+
+function displaySelectedGraph(selectedGraph) {
+    var allGraphSections = document.getElementsByClassName("graph-section");
+    for (var i = 0; i < allGraphSections.length; i++) {
+        allGraphSections[i].style.display = "none";
+    }
+
+    document.getElementById(selectedGraph).style.display = "block";
+}
+
+
+
+</script>
+
+
+
+  <script>
     // ... Previous JavaScript code ...
 
     document.addEventListener("DOMContentLoaded", function() {

@@ -16,7 +16,7 @@ cur = conn.cursor()
 from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
-app.secret_key = "ken2020"
+app.secret_key = "****"
 
 # Create an object called app
 # __name__ is used to tell Flask where to access HTML Files
@@ -185,7 +185,7 @@ def dashboard():
    bar_chart = pygal.Bar()
    bar_chart.title = 'Sales Quantity per Product'
    bar_chart.x_labels = product_name
-   bar_chart.add('Sales', sales)
+   bar_chart.add('Sales(Qty)', sales)
    #Graph to show remaining stock.
    stock_data = remaining_stock()
    product_names = []
@@ -206,7 +206,7 @@ def dashboard():
    sales_revenue_per_day = [] 
    for i in daily_revenue:
     dates.append(i[0])
-    sales_revenue_per_day.append(i[1]) 
+    sales_revenue_per_day.append(i[1])
    line_chart = pygal.Line()
    line_chart.title = "Sales Revenue per Day"
    line_chart.x_labels = dates

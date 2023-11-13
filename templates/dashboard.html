@@ -2,58 +2,62 @@
 
 {% block content %}
 
-    <div class="container">
-        <div class="row">
-        <div class="col-lg-6 col-sm-12">
-            <embed type="image/svg+xml" src={{line_chart|safe}} style='max-width:1000px'/>
+<div class="container">
+    <div class="row">
+        <div class="col-lg-12">
+            <h3>Choose A Graph</h3>
+            <select id="graphSelector">
+                <option value="line_chart">Sales Revenue per Day</option>
+                <option value="line_graph">Sales Revenue per Month</option>
+                <option value="chart_line">Net Profit per Day</option>
+                <option value="line_graphs">Net Profit per Month</option>
+                <option value="bar_graph">Remaining Stock per Product</option>
+                <option value="bar_chart">Sales Quantity per Product</option>
+            </select>
         </div>
-        <div class="col-lg-6 col-sm-12">
+    </div>
+    <br>
+    <div class="row graph-section" id="line_chart">
+        <div class="col-lg-12 col-sm-12">
+            <embed type="image/svg+xml" src={{line_chart|safe}} style="max-width: 1000px" />
+        </div>
+    </div>
+    <div class="row graph-section" id="line_graph">
+        <div class="col-lg-12 col-sm-12">
+            <embed type="image/svg+xml" src={{line_graph|safe}} style="max-width: 1000px" />
+        </div>
+    </div>
+    <div class="row graph-section" id="chart_line">
+    <div class="col-lg-12 col-sm-12">
             
-            <embed type="image/svg+xml" src={{line_graph|safe}} style='max-width:1000px'/> 
-           
-        </div>
-        </div>
-        <br>
-        <div class="row">
-        <div class="col-lg-6 col-sm-12">
-            
-            <embed type="image/svg+xml" src={{chart_line|safe}} style='max-width:1000px'/> 
-           
-        </div>
-        <div class="col-lg-6 col-sm-12">
-            <embed type="image/svg+xml" src={{line_graphs|safe}} style='max-width:1000px'/> 
-
-        </div>
-
-        </div>
-        <div class="row">
-            <div class="col-lg-6 col-sm-12">
-                
-                <embed type="image/svg+xml" src={{bar_graph|safe}} style='max-width:1000px'/> 
-               
-            </div>
-            <div class="col-lg-6 col-sm-12">
-               
-                <embed type="image/svg+xml" src={{bar_chart|safe}} style='max-width:1000px'/>
-            </div>
-    
-            </div>
-            <div class="row">
-                <div class="col-lg-6 col-sm-12">
-                    
-                    <embed type="image/svg+xml" src={{chart|safe}} style='max-width:1000px'/> 
-                   
-                </div>
-                <div class="col-lg-6 col-sm-12">
-                   
-                    
-                </div>
-        
-                </div>
-        
-        
+        <embed type="image/svg+xml" src={{chart_line|safe}} style='max-width:1000px'/> 
+       
+    </div>
+    </div>
+    <div class="row graph-section" id="line_graphs">
+    <div class="col-lg-12 col-sm-12">
+        <embed type="image/svg+xml" src={{line_graphs|safe}} style='max-width:1000px'/> 
 
     </div>
+    </div>
+    <div class="row graph-section" id="bar_graph">
+    <div class="col-lg-12 col-sm-12">
+                
+        <embed type="image/svg+xml" src={{bar_graph|safe}} style='max-width:1000px'/> 
+       
+    </div>
+    </div>
+    <div class="row graph-section" id="bar_chart">
+    <div class="col-lg-12 col-sm-12">
+       
+        <embed type="image/svg+xml" src={{bar_chart|safe}} style='max-width:1000px'/>
+    </div>
+    </div>
+
+    
+</div>
+
+
 {% endblock %} 
    
  
