@@ -54,9 +54,6 @@ python-dateutil==2.8.2
 python-docx==1.0.0
 python-escpos==2.2.0
 pytz==2023.3
-pyusb==1.2.1
-pywin32==306
-pywin32-ctypes==0.2.0
 PyYAML==6.0.1
 qrcode==7.4.2
 reportlab==4.0.6
